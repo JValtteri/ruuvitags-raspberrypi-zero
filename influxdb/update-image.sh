@@ -2,4 +2,4 @@
 
 set -xe
 
-sudo docker pull influxdb:1.7
+sudo docker pull mendhak/arm32v6-influxdb:latest

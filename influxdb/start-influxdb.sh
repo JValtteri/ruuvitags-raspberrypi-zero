@@ -10,6 +10,7 @@ sudo docker run \
     --network grafana-influxdb \
     --name influxdb \
     --restart unless-stopped \
-    -v "$cur_dir"/backup:/backup \
-    -v "$cur_dir"/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
-    influxdb:1.7 -config /etc/influxdb/influxdb.conf
+    -v "$pwd"/influxdbdata:/root/.influxdb/data/
+    -v "$pwd"/backup:/tmp/backups/ \
+    -v "$pwd"/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
+    mendhak/arm32v6-influxdb:latest -config /etc/influxdb/influxdb.conf

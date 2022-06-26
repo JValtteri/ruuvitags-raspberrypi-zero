@@ -7,5 +7,5 @@ sudo docker run \
      -it \
      --link=influxdb \
      --network grafana-influxdb \
-     influxdb:1.7 \
+     mendhak/arm32v6-influxdb:latest \
      influx -host influxdb
