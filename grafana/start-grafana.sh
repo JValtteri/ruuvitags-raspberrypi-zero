@@ -10,5 +10,5 @@ sudo docker run \
     --restart unless-stopped \
     -e "GF_AUTH_ANONYMOUS_ENABLED=true" \
     -e "GF_AUTH_ANONYMOUS_ORG_NAME=Koti" \
-    --mount type=bind,source="$(pwd)/grafana-storage",target=/var/lib/grafana \
+    -v grafana-storage:/var/lib/grafana \
     grafana/grafana
