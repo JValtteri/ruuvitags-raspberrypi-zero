@@ -10,7 +10,8 @@ collect measurements from RuuviTags and storing them in InfluxDB.
 ## Initial creation
 
 1. Clone git repository to repo directory:
-   `git clone https://github.com/nikobockerman/RuuviCollector.git repo`
+   `git clone https://github.com/Scrin/RuuviCollector.git repo`
+
 2. Checkout repo to a desired version:
     - See [Select ruuvi-collector version](#select-ruuvi-collector-version)
 3. Download base images: `./update-base-images.sh`

@@ -11,9 +11,9 @@ RuuviTags measurement data together with RuuviCollector and Grafana.
    `mv influxdb.conf{.default,}`
 4. Modify generated configuration file `influxdb.conf`
     - My changes to the defaults:
-        - `[data]` / `cache-max-memory-size` = `"512m"`
+        - `[data]` / `cache-max-memory-size` = `"256m"`
             - Limits the amount of memory influxdb will allocate to itself
-        - `[data]` / `max-concurrent-compactions` = `2`
+        - `[data]` / `max-concurrent-compactions` = `1`
             - Use max two cores to perform compactions
         - `[monitor]` / `store-enabled` = `false`
             - Disable internal monitoring. This causes a lot of performance

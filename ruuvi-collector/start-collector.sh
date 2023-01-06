@@ -1,20 +1,11 @@
 #!/bin/bash
 
-set -xe
-
-cur_dir=$(dirname "$(readlink -f "$0")")
-repo_dir="$cur_dir"/repo
-
-branch_name=$(git -C "$repo_dir" rev-parse --abbrev-ref HEAD)
-commit_id=$(git -C "$repo_dir" rev-parse --short HEAD)
-docker_image_tag="${branch_name}-${commit_id}"
-
-sudo docker run \
+docker run \
     -d \
-    --name ruuvi-collector \
+    --name ruuvi \
+    --network grafana-influxdb \
     --restart unless-stopped \
-    --privileged \
     --net=host \
-    -v "$cur_dir"/ruuvi-collector.properties:/app/ruuvi-collector.properties:ro \
-    -v "$cur_dir"/ruuvi-names.properties:/app/ruuvi-names.properties:ro \
-    ruuvi-collector:"$docker_image_tag"
+    --cap-add=NET_ADMIN \
+    --mount type=bind,source="$(pwd)"/config.yml,target=/app/config.yml,readonly \
+    ruuvitag-logger-py:deb-v0.2
