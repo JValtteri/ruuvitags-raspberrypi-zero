@@ -18,7 +18,7 @@ in [**InfluxDB**](https://www.influxdata.com/) and [visualize](https://play.graf
 
 See [**Config**](https://github.com/JValtteri/ruuvi2influx/blob/master/README.md#configure) in *JValtteri/ruuvi2influx/README.md* for detais.
 
-#### Run the ready image
+#### Run ruuvi2influx
 
 Debian based image
 ```bash
@@ -38,16 +38,33 @@ $ docker run \
 
 #### PiZero compatible image
 ```
-mendhak/arm32v6-influxdb
+docker pull mendhak/arm32v6-influxdb
+```
+*This repo is inactive and out of date. It is recommended to build the container yourself*
+
+#### Building it yourself
+
+```
+git clone https://github.com/mendhak/docker-arm32v6-influxdb.git
+docker build -t mendhak/arm32v6-influxdb .
 ```
 
 #### Configuration
 See [influxdb/README.md](influxdb/README.md) for detais.
 
-#### Run the ready image
+#### Run InfluxDB
 
 ```
-
+sudo docker run \
+    -d \
+    -p 127.0.0.1:8086:8086 \
+    --network grafana-influxdb \
+    --name influxdb \
+    --restart unless-stopped \
+    -v "$(pwd)"/influxdbdata:/root/.influxdb/data/
+    -v "$(pwd)"/backup:/tmp/backups/ \
+    -v "$(pwd)"/influxdb.conf:/etc/influxdb/influxdb.conf:ro \
+    mendhak/arm32v6-influxdb:latest -config /etc/influxdb/influxdb.conf
 ```
 
 ------
@@ -66,10 +83,19 @@ docker pull grafana/grafana
 #### Configuration
 See [grafana/README.md](grafana/README.md) for detais.
 
-#### Run the ready image
+#### Run Grafana
 
 ```
-
+sudo docker run \
+    -d \
+    -p 3000:3000 \
+    --network grafana-influxdb \
+    --name grafana \
+    --restart unless-stopped \
+    -e "GF_AUTH_ANONYMOUS_ENABLED=true" \
+    -e "GF_AUTH_ANONYMOUS_ORG_NAME=Koti" \
+    -v grafana-storage:/var/lib/grafana \
+    grafana/grafana
 ```
 
 
