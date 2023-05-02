@@ -1,73 +1,79 @@
 # RuuviTags data collection on Raspberry PI
 
-These tools provide means to collect measurement data from RuuviTags, store it
-in InfluxDB and display the data through Grafana.
+These tools provide means to collect measurement data from [**RuuviTags**](https://ruuvi.com/), store it
+in [**InfluxDB**](https://www.influxdata.com/) and [visualize](https://play.grafana.org/d/000000012/grafana-play-home?orgId=1) the data with [**Grafana**](https://grafana.com/).
+ the data.
 
-## Network structure between created docker containers
+------
 
-This section describes the network confiration used for communication between
-the different docker containers. Helper scripts in this directory and start
-scripts for each component are configured to setup and use this network
-configuration.
+## Setup ruuvi2influx
 
-The network configuration is designed to allow only the minimum that is required
-for each component.
+#### Pull The Docker Image
 
-### RuuviCollector
+```docker pull jvaltteri/ruuvi2influx```
 
-RuuviCollector requires access to host network in order to be able to access
-Bluetooth LE devices so that it's able to listen messages from RuuviTags.
+*At the time of writing, the ready image is only for* **ARM32v6** *(Rasapberry Pi Zero).*
 
-Additionally RuuviCollector requires access to InfluxDb container in order to
-write recorded data from RuuviTags to the database.
+#### Configuration
 
-When a docker container is connected to host network, it can't be connected to
-any other docker bridge network at the same time. Therefore, access
-RuuviCollector needs access to InfluxDb from host network.
+See [**Config**](https://github.com/JValtteri/ruuvi2influx/blob/master/README.md#configure) in *JValtteri/ruuvi2influx/README.md* for detais.
 
-For these reasons, RuuviCollector has these connections:
+#### Run the ready image
 
-- Connected to host network in order to access Bluetooth LE devices
-- Writes to InfluxDb through 127.0.0.1:8086 published from InfluxDb Container
+Debian based image
+```bash
+$ docker run \
+    -d \
+    --name ruuvi \
+    --restart unless-stopped \
+    --net=host \
+    --cap-add=NET_ADMIN \
+    --mount type=bind,source="$(pwd)"/config.yml,target=/app/config.yml,readonly \
+    ruuvi2influx:latest
+```
 
-### InfluxDb
+------
 
-InfluxDb needs to be listening for write requests from RuuviCollector and read
-requests from Grafana.
+## Setup InfluxDB
 
-For those reasons, InfluxDb has these connections:
+#### PiZero compatible image
+```
+mendhak/arm32v6-influxdb
+```
 
-- `grafana-influxbd` docker bridge network to provide data for Grafana
-- Binds port 8086 to 127.0.0.1:8086 on host machine allowing RuuviCollector to
-  write data through that port. Technically this allows anyone from within the
-  same machine to make requests to InfluxDb, but only RuuviCollector is
-  configured to use that port.
+#### Configuration
+See [influxdb/README.md](influxdb/README.md) for detais.
 
-### Grafana
+#### Run the ready image
 
-Grafana needs to be able to read data from InfluxDb and it needs to be listening
-on port 3000 of host machine in order for clients to access the Grafana Web UI.
+```
 
-For those reasons, Grafana has these connections:
+```
 
-- `grafana-influxdb` docker bridge network to read data from InfluxDb
-- Binds port 3000 to *:3000 on host machine allowing anyone with access to host
-  machine in the network to access Grafana Web UI.
+------
 
-## Initial setup
+## Setup Grafana
 
-1. Install needed packages to host raspberry
-    - `docker-ce`:
-      <https://docs.docker.com/install/linux/docker-ce/debian/#install-using-the-convenience-script>
-2. Create docker networks
-    - Run `./docker-network-setup.sh` script to create networks
-3. Install InfluxDB
-    - See [influxdb/README.md](influxdb/README.md) for instructions
-4. Install RuuviCollector
-    - See [ruuvi-collector/README.md](ruuvi-collector/README.md) for
-      instructions
-5. Install Grafana
-    - See [grafana/README.md](grafana/README.md) for instructions
+#### PiZero compatible image
+
+There doesn't seem to be any reasonably up-to-date Grafana version compatible with Raspberry Pi Zero W (ARMv6). It is recommended to use a **Pi 3** or newer for hosting **Grafana**. Official ```grafana/grafana:latest``` image supports **ARMv7** and newer.
+
+#### Official image
+```
+docker pull grafana/grafana
+```
+
+#### Configuration
+See [grafana/README.md](grafana/README.md) for detais.
+
+#### Run the ready image
+
+```
+
+```
+
+
+------
 
 ## Updates
 
