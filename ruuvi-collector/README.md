@@ -1,89 +1,92 @@
 # RuuviCollector
 
-These instructions are for running RuuviCollector inside docker container to
-collect measurements from RuuviTags and storing them in InfluxDB.
+These instructions are for running ruuvi2influx inside docker container to collect measurements from RuuviTags and storing them in InfluxDB.
+Docker image used: [jvaltteri/ruuvi2influx](https://hub.docker.com/r/jvaltteri/ruuvi2influx)
 
-- RuuviCollector software: <https://github.com/Scrin/RuuviCollector>
-- RuuviCollector fork used in these instructions:
-  <https://github.com/nikobockerman/RuuviCollector>
+----
 
-## Initial creation
+## Overview
 
-1. Clone git repository to repo directory:
-   `git clone https://github.com/Scrin/RuuviCollector.git repo`
+Intended for **Raspberry Pi Zero** (ARM32v6). Images are first pushed as **ARM32v6**. Other versions may be pushed later.
+If a suitable version is not available for download, you can build one yourself.
 
-2. Checkout repo to a desired version:
-    - See [Select ruuvi-collector version](#select-ruuvi-collector-version)
-3. Download base images: `./update-base-images.sh`
-4. Build docker image: `./create-image.sh`
-5. Create configuration:
-    - Copy the example one:
-      `cp repo/ruuvi-collector.properties.example ruuvi-collector.example`
-    - Modify it according to desired setup
-        - My modifications:
-            - Influxdb related settings should match what was set when database
-              was created:
-                - `storage.method=influxdb`
-                - `influxUrl=http://127.0.0.1:8086`
-                - `influxDatabase=ruuvi`
-                - `influxMeasurement=ruuvi_measurements`
-                - `influxRetentionPolicy=ruuvi_collector_policy`
-            - Set desired interval for writing data to Influxdb (one entry per
-              minute):
-                - `measurementUpdateLimit=59900`
-            - Only use ruuvi tags that are listed in ruuvi-names.properties
-                - `filter.mode=named`
-            - Blacklist information that I don't use in Grafana:
-                - `storage.values=blacklist`
-                -
-                  `storage.values.list=accelerationX,accelerationY,accelerationZ,accelerationTotal,accelerationAngleFromX,accelerationAngleFromY,accelerationAngleFromZ,movementCounter`
+Based on [debian:bullseye-slim image](https://hub.docker.com/_/debian?tab=tags&page=1&name=bullseye-slim) image. 
 
-6. Create friendly names for tags that will be seen in Grafana:
-    - Copy the example file:
-      `cp repo/ruuvi-names.properties.example ruuvi-names.example`
-    - List ruuvi tags MAC addresses and give them desired names
-7. Start ruuvi-collector: `./start-collector.sh`
+## Config
 
-## Update ruuvi-collector container
+For a more [detailed description](https://github.com/JValtteri/ruuvi2influx#config), refer to the source repositrory.
 
-1. Pull new base images: `./update-base-images.sh`
-2. Update git repo to version you want to use
-    - See [Select ruuvi-collector version](#select-ruuvi-collector-version)
-3. Build new docker image: `./create-image.sh`
-4. Rename old container for backup:
-   `sudo docker container rename ruuvi-collector{,-old}`
-5. Stop old container `sudo docker container stop ruuvi-collector-old`
-6. Start new version: `./start-collector.sh`
+### Mandatory keys in configuration
 
-7. Verify new version works by checking that grafana gets new data from ruuvi
-   tags
+| Key    | Default  | Explanation            |
+| ----------------- | - | ------------------ |
+| `"sample_interval"`  | 2 | Time between pings |
+| `"event_queue"`     | 15000 | How meny pings are buffered if network is interrupted. |
+| `"db_name"`         | "db" | The InfluxDB name |
+| `"db_user"`         | "user" | Username to log in to the InfluxDB |
+| `"db_password"`     |   | the InfluxDB password |
+| `"db_host"`         | "localhost" | the address to the InfluxDB. ```!! omit 'https:\\' !!``` |
+| `"db_port"`         | 8086 | Port used to connect to the InfluxDB |
 
-8. Remove old container: `sudo docker container rm ruuvi-collector-old`
-9. Remove unused images: `sudo docker image prune`
-    - This can also be done only once after all containers are updated
+### Example ***config.yml***
+```yaml
+######################################
+# RuuviTag-logger Configuration file #
+######################################
 
-## Select ruuvi-collector version
+# SAMPLE INTERVAL
+sample_interval: 60 # seconds
+# Listening is constant. If you are building a databace, 
+# you may use this to limit the data resolution to a 
+# reasonable rate.
+# To turn off filtering and internal processing, set 
+# sample_interval to 0.
 
-1. Enter repo directory: `cd repo`
-2. Fetch repository information: `git fetch --all --prune`
-3. List available branches: `git branch --all -vv`
-4. Choose desired version branch from those that start with `remotes/origin/`
-    - If same as previously
-        - Update to newest version of that branch (make sure you don't have any
-          local changes): `git reset --hard origin/version-0.2.5`
-    - If new version branch
-        - Checkout the new branch: `git checkout version-0.2.5`
-5. Leave repo directory: `cd ..`
+# EVENT QUEUE
+event_queue: 15000
 
-## Change configuration files
+# INFLUX DB
+db: True                                        # Enable or disable database
+db_name: ruuvitags
+db_user: sensor
+db_password: password
+db_host: 127.0.0.1
+db_port: 8086
 
-To take modified configuration files into use, ruuvi-collector docker image
-needs to be restarted: `sudo docker container restart ruuvi-collector`
+column_width: 14  # Column width on screen (14 default)
 
-## Repo maintenance
+# List and name your tags
+tags:
+  "CC:CA:7E:52:CC:34": Backyard
+  "FB:E1:B7:04:95:EE": Upstairs
+  "E8:E0:C6:0B:B8:C5": Downstairs
+```
 
-1. If upstream has new version released
-    - Create new version branch by copying and rebasing previous one
-    - Remove unnecessary commits from the previous version branch
-2. Update dependency versions in pom.xml
-3. Push new branch / new commits to origin
+place `config.yaml` in the directory where you are starting your container
+
+## Run
+
+Run the convenience script: `./start-collector.sh`
+
+Script contains the recommended start command:
+```
+$ docker run \
+    -d \
+    --name ruuvi \
+    --restart unless-stopped \
+    --net=host \
+    --cap-add=NET_ADMIN \
+    --mount type=bind,source="$(pwd)"/config.yml,target=/app/config.yml,readonly \
+    ruuvi2influx:latest
+```
+
+## Source
+Source repository and documentation on [GitHub](https://github.com/JValtteri/ruuvi2influx)
+
+## Build It Your Self
+
+If a compatible, or up-to-date image isn't available, you can build one locally with these commands:
+```
+$ git clone https://github.com/JValtteri/ruuvi2influx.git
+$ docker build -f Debian.dockerfile --tag ruuvi2influx .
+```
