@@ -83,7 +83,7 @@ $ docker run \
 ## Source
 Source repository and documentation on [GitHub](https://github.com/JValtteri/ruuvi2influx)
 
-## Build It Your Self
+## Build It Yourself
 
 If a compatible, or up-to-date image isn't available, you can build one locally with these commands:
 ```
