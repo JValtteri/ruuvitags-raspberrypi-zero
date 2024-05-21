@@ -1,11 +1,12 @@
 #!/bin/bash
 
-docker run \
+set -xe
+
+sudo docker run \
     -d \
     --name ruuvi \
-    --network grafana-influxdb \
     --restart unless-stopped \
     --net=host \
     --cap-add=NET_ADMIN \
     --mount type=bind,source="$(pwd)"/config.yml,target=/app/config.yml,readonly \
-    ruuvitag-logger-py:deb-v0.2
+    ruuvi2influx:latest
